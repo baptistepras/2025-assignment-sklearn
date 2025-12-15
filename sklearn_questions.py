@@ -98,7 +98,6 @@ class KNearestNeighbors(ClassifierMixin, BaseEstimator):
         self.X_train_ = X
         self.y_train_ = y
         self.classes_ = np.unique(y)
-        check_is_fitted(self, attributes=["X_train_", "y_train_"])
         return self
 
     def predict(self, X):
@@ -128,7 +127,11 @@ class KNearestNeighbors(ClassifierMixin, BaseEstimator):
         y_pred = np.zeros(X.shape[0], dtype=self.y_train_.dtype)
 
         for i in range(X.shape[0]):
-            nearest_indices = np.argsort(distances[i])[: self.n_neighbors]
+            nearest_indices = (
+                np.argpartition(
+                    distances[i], self.n_neighbors - 1
+                )[: self.n_neighbors]
+            )
             nearest_labels = self.y_train_[nearest_indices]
 
             values, counts = np.unique(nearest_labels, return_counts=True)
@@ -236,7 +239,6 @@ class MonthlySplit(BaseCrossValidator):
         if not pd.api.types.is_datetime64_any_dtype(time_data):
             raise ValueError("time column should be datetime")
 
-        time_data = pd.to_datetime(time_data)
         if isinstance(time_data, pd.Series):
             months = time_data.dt.to_period("M")
         else:
